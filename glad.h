@@ -23,8 +23,8 @@
 #define CHUNK_ALLOC_SIZE(X) (sizeof(chunk) + (sizeof(char*) * X)) 
 
 #define ROUND_UP(val, size) ((val + size - 1) & -size)
-#define ZEROMEM 0x1
-#define SOFTFAIL 0x10
+#define ZEROMEM 0x1 	/* If this flag is set for a function that accepts it, the corresponding memory will be zeroed */
+#define SOFTFAIL 0x10	/* If this flag is set, the function will return an error value instead of assert(0). */
 
 #define RETURN_ERRVAL_ON_ERR(val, errval, fail_err, new_errno) 	\
 if (val == fail_err) {  										\
@@ -137,7 +137,7 @@ void* arena_alloc(arena* arena, const ptrdiff_t num_bytes, int flags)
 		ptrdiff_t chunk_size = (alloc_size >= DEFAULT_CHUNK_SIZE)
 			?  (alloc_size * 2): DEFAULT_CHUNK_SIZE;
 		chunk* new_head = alloc_chunk(chunk_size, flags);
-		if (!new_chunk) return 0;
+		if (!new_head) return 0;
 		arena->ar_head = new_head;
 		arena->ar_tail = arena->ar_head;
 	}
@@ -196,7 +196,8 @@ void* arena_push(arena* arena, void* data, ptrdiff_t size, int flags) {
 	if (!arena || !data) 
 		return 0;
 
-	void* start_addr = arena_alloc(arena, size, flags); 
+	void* start_addr = arena_alloc(arena, size, flags);
+	if (!start_addr) return 0;
 	memcpy(start_addr, data, size);
 	return start_addr;
 }
@@ -208,7 +209,7 @@ void* arena_push(arena* arena, void* data, ptrdiff_t size, int flags) {
  * 			This coalescing resolves internal fragmentation of each chunk by
  * 			copying over only the allocated portions.
  *
- * @return 	A new pointer to the final in-use element.	
+ * @return 	A pointer to the start of the newly allocated region.	
  */
 void* arena_crop_and_coalesce(arena* arena, int flags)
 {
@@ -232,7 +233,7 @@ void* arena_crop_and_coalesce(arena* arena, int flags)
 		
 	arena->ar_head = cropped;
 	arena->ar_tail = arena->ar_head;
-	return &cropped->ch_data[curr_offset];
+	return cropped->ch_data;
 }
 
 /** 
@@ -241,7 +242,7 @@ void* arena_crop_and_coalesce(arena* arena, int flags)
  * @details
  * 		Any allocation failure results in cleanup.
  */
-void arena_copy(arena *restrict copy_dst, const arena *restrict copy_src)
+void arena_copy(arena *restrict copy_dst, const arena *restrict copy_src, int flags)
 {
 	if (!copy_dst || !copy_src) 
 		return;
@@ -253,7 +254,7 @@ void arena_copy(arena *restrict copy_dst, const arena *restrict copy_src)
 	chunk *dst_cursor = 0;
 	
 	while (src_cursor) {
-		chunk *new_chunk = alloc_chunk(src_cursor->ch_size, 0);
+		chunk *new_chunk = alloc_chunk(src_cursor->ch_size, flags);
 		/* cleanup the new area if we ever fail to allocate */
 		if (!new_chunk) {
 		    arena_free(copy_dst, ZEROMEM);
