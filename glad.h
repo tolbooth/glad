@@ -1,5 +1,5 @@
-#ifndef ARENA_H
-#define ARENA_H
+#ifndef GLAD_H
+#define GLAD_H
 
 #include <stddef.h>
 #include <unistd.h>
@@ -288,4 +288,4 @@ void arena_free(arena* arena, int flags) {
 		free_chunk(prev);
 	}
 }	
-#endif /* ARENA_H */
+#endif /* GLAD_H */
