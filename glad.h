@@ -80,14 +80,15 @@ chunk* alloc_chunk(ptrdiff_t size, int flags)
 			MAP_PRIVATE,
 			fd, 0);
 	close(fd);
-	if (flags & ZEROMEM) {
-		memset(ret_chunk, 0, allocation_size);
-	}
 	if (ret_chunk == MAP_FAILED) {
 		if (flags & SOFTFAIL) {
 			return 0;	
 		}
 		assert(0);
+	}
+
+	if (flags & ZEROMEM) {
+		memset(ret_chunk, 0, allocation_size);
 	}
 
 	ret_chunk->ch_next = 0;
