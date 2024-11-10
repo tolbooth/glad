@@ -235,7 +235,45 @@ void* arena_crop_and_coalesce(arena* arena, int flags)
 	return &cropped->ch_data[curr_offset];
 }
 
-void arena_copy(arena *restrict copy_dst, const arena *restrict copy_src);
+/** 
+ * @brief	Copies arena copy_src to cpy_dst.	
+ * 
+ * @details
+ * 		Any allocation failure results in cleanup.
+ */
+void arena_copy(arena *restrict copy_dst, const arena *restrict copy_src)
+{
+	if (!copy_dst || !copy_src) 
+		return;
+
+	copy_dst->ar_head = 0;
+	copy_dst->ar_tail = 0;
+	
+	chunk *src_cursor = copy_src->ar_head;
+	chunk *dst_cursor = 0;
+	
+	while (src_cursor) {
+		chunk *new_chunk = alloc_chunk(src_cursor->ch_size, 0);
+		/* cleanup the new area if we ever fail to allocate */
+		if (!new_chunk) {
+		    arena_free(copy_dst, ZEROMEM);
+		    return;
+		}
+		
+		new_chunk->ch_offset = src_cursor->ch_offset;
+		memcpy(new_chunk->ch_data, src_cursor->ch_data, sizeof(char*) * src_cursor->ch_offset);
+		
+		if (!copy_dst->ar_head) {
+		    copy_dst->ar_head = new_chunk;
+		} else {
+		    dst_cursor->ch_next = new_chunk;
+		}
+		
+		copy_dst->ar_tail = new_chunk;
+		dst_cursor = new_chunk;
+		src_cursor = src_cursor->ch_next;
+	}
+}
 
 /** 
  * @brief 	Clears the given arena without freeing the memory 
