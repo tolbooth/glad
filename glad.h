@@ -283,7 +283,7 @@ void arena_free(arena* arena, int flags) {
 	chunk* cursor = arena->ar_head;
 	while (cursor) {
 		if (flags & ZEROMEM) {
-			memset(cursor->ch_data, 0, sizeof(char*) * cursor->ch_size);
+			memset(cursor, 0, CHUNK_ALLOC_SIZE(cursor->ch_size));
 		}
 		chunk* prev = cursor;
 		cursor = cursor->ch_next;	
