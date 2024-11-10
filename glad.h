@@ -220,10 +220,10 @@ void* arena_crop_and_coalesce(arena* arena, int flags)
 	chunk* cursor = arena->ar_head;
 	ptrdiff_t curr_offset = 0;
 	while (cursor) {
-		curr_offset += cursor->ch_offset;
 		memcpy(&cropped->ch_data[curr_offset],
 				cursor->ch_data,
 				sizeof(char*) * cursor->ch_offset);
+		curr_offset += cursor->ch_offset;
 		chunk* prev = cursor;
 		cursor = cursor->ch_next;	
 		free_chunk(prev);
