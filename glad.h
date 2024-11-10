@@ -52,11 +52,14 @@ struct arena {
  * @brief 	Allocates a single chunk with at least the specified size.
  * 
  * @details
- * 			Uses mmap to allocate a chunk of memory with at least enough room
- * 			for the chunk struct itself and size*sizeof(char*) bytes. 
+ * 		Uses mmap to allocate a chunk of memory with at least enough room
+ * 		for the chunk struct itself and size*sizeof(char*) bytes. 
+ *
+ * @param size 	The minimum number of bytes to allocate in the chunk.
+ * @param flags Flags that modify allocation behavior, e.g., `ZEROMEM` for zeroing memory.
  *
  * @return 	A pointer to the allocated chunk. If mmap fails for any reason, this
- * 			function returns 0.
+ * 		function returns 0.
  */
 chunk* alloc_chunk(ptrdiff_t size, int flags)
 {
@@ -100,8 +103,9 @@ chunk* alloc_chunk(ptrdiff_t size, int flags)
 /** 
  * @brief 	Frees the chunk at the provided reference.
  *
- * @return  void, asserts on munmap failure	
+ * @param ch 	Pointer to the chunk to be freed.
  *
+ * @return  	void, asserts on munmap failure.
  */
 void free_chunk(chunk* ch)
 {
@@ -111,17 +115,19 @@ void free_chunk(chunk* ch)
 	assert(!check);
 }
 
-/* Basic arena operations */
-
 /** 
- * @brief 	Allocates num_bytes in the given arena	
+ * @brief 	Allocates num_bytes in the given arena.
  * 
  * @details
- * 			Uses mmap to allocate a chunk of memory with at least enough room
- * 			for the chunk struct itself and size*sizeof(char*) bytes. 
+ * 		Uses mmap to allocate a chunk of memory with at least enough room
+ * 		for the chunk struct itself and size*sizeof(char*) bytes. 
  *
+ * @param arena 	The arena in which memory will be allocated.
+ * @param num_bytes 	Number of bytes to allocate.
+ * @param flags 	Flags that modify allocation behavior, e.g., `ZEROMEM` for zeroing memory.
+ 
  * @return 	A pointer to the start of the allocated memory region. Null if the 
- * 			allocation fails. 
+ * 		allocation fails. 
  */
 void* arena_alloc(arena* arena, const ptrdiff_t num_bytes, int flags)
 {
@@ -165,12 +171,14 @@ void* arena_alloc(arena* arena, const ptrdiff_t num_bytes, int flags)
 }
 
 /** 
- * @brief	Gets the total in-use size of the arena	
+ * @brief	Gets the total in-use size of the arena.
  * 
  * @details
- * 			Size is measured in (sizeof char*).
+ * 		Size is measured in (sizeof char*).
  *
- * @return 	The computed size.	
+ * @param arena The arena for which to calculate the in-use size.
+ *
+ * @return 	The computed size.
  */
 ptrdiff_t arena_get_size(arena* arena) {
 	if (!arena)
@@ -188,9 +196,14 @@ ptrdiff_t arena_get_size(arena* arena) {
 
 
 /** 
- * @brief	Pushes the buffer onto the arena	
+ * @brief	Pushes the buffer onto the arena.
  * 
- * @return 	A pointer to the start of the newly allocated region.	
+ * @param arena The arena to which data will be pushed.
+ * @param data 	Pointer to the data buffer to push onto the arena.
+ * @param size 	Number of bytes in the data buffer.
+ * @param flags Flags that modify allocation behavior, e.g., `ZEROMEM` for zeroing memory.
+ *
+ * @return 	A pointer to the start of the newly allocated region.
  */
 void* arena_push(arena* arena, void* data, ptrdiff_t size, int flags) {
 	if (!arena || !data) 
@@ -203,13 +216,16 @@ void* arena_push(arena* arena, void* data, ptrdiff_t size, int flags) {
 }
 
 /** 
- * @brief	Crops the arena to its final in-use element and coalesces the chunks	
+ * @brief	Crops the arena to its final in-use element and coalesces the chunks.
  * 
  * @details
- * 			This coalescing resolves internal fragmentation of each chunk by
- * 			copying over only the allocated portions.
+ * 		This coalescing resolves internal fragmentation of each chunk by
+ * 		copying over only the allocated portions.
  *
- * @return 	A pointer to the start of the newly allocated region.	
+ * @param arena The arena to crop and coalesce.
+ * @param flags Flags that modify behavior, e.g., `ZEROMEM` for zeroing memory.
+ *
+ * @return 	A pointer to the start of the newly allocated region.
  */
 void* arena_crop_and_coalesce(arena* arena, int flags)
 {
@@ -236,11 +252,16 @@ void* arena_crop_and_coalesce(arena* arena, int flags)
 	return cropped->ch_data;
 }
 
+
 /** 
- * @brief	Copies arena copy_src to cpy_dst.	
+ * @brief	Copies arena copy_src to copy_dst.
  * 
  * @details
  * 		Any allocation failure results in cleanup.
+ * 
+ * @param copy_dst 	The destination arena to which data will be copied.
+ * @param copy_src 	The source arena from which data will be copied.
+ * @param flags 	Flags that modify allocation behavior, e.g., `ZEROMEM` for zeroing memory.
  */
 void arena_copy(arena *restrict copy_dst, const arena *restrict copy_src, int flags)
 {
@@ -277,10 +298,12 @@ void arena_copy(arena *restrict copy_dst, const arena *restrict copy_src, int fl
 }
 
 /** 
- * @brief 	Clears the given arena without freeing the memory 
+ * @brief 	Clears the given arena without freeing the memory.
  *
  * @details
- *			Marks the chunks as empty again so that they may be used
+ *		Marks the chunks as empty again so that they may be used.
+ *
+ * @param arena The arena to clear.
  */
 void arena_clear(arena* arena) {
 	if (!arena)
@@ -295,10 +318,12 @@ void arena_clear(arena* arena) {
 }
 
 /** 
- * @brief 	Marks whole arena as unallocated.	
+ * @brief 	Marks whole arena as unallocated.
  *
  * @details
- * 			Does not set the associated memory. Use with care.
+ * 		Does not set the associated memory. Use with care.
+ *
+ * @param arena The arena to reset.
  */
 void arena_reset(arena* arena) {
 	if (!arena)
@@ -312,8 +337,10 @@ void arena_reset(arena* arena) {
 }
 
 /** 
- * @brief  Frees the given arena.	
+ * @brief  Frees the given arena.
  *
+ * @param arena The arena to free.
+ * @param flags Flags that modify free behavior, e.g., `ZEROMEM` for zeroing memory.
  */
 void arena_free(arena* arena, int flags) {
 	if (!arena)
