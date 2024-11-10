@@ -135,7 +135,8 @@ void* arena_alloc(arena* arena, const ptrdiff_t num_bytes, int flags)
 		assert(!arena->ar_head); /* Something is very broken if we have start but lost end */
 		ptrdiff_t chunk_size = (alloc_size >= DEFAULT_CHUNK_SIZE)
 			?  (alloc_size * 2): DEFAULT_CHUNK_SIZE;
-		chunk* new_head = alloc_chunk(chunk_size, flags); 
+		chunk* new_head = alloc_chunk(chunk_size, flags);
+		if (!new_chunk) return 0;
 		arena->ar_head = new_head;
 		arena->ar_tail = arena->ar_head;
 	}
@@ -154,9 +155,9 @@ void* arena_alloc(arena* arena, const ptrdiff_t num_bytes, int flags)
 	/* must allocate a new chunk to the arena */
 	assert(!cursor);
 	ptrdiff_t chunk_size = (alloc_size * 2);
-	chunk* new_chunk = alloc_chunk(chunk_size, flags); 
+	chunk* new_chunk = alloc_chunk(chunk_size, flags);
+	if (!new_chunk) return 0;
 	start_addr = new_chunk->ch_data;
-
 	arena->ar_tail->ch_next = new_chunk;
 	arena->ar_tail = new_chunk;
 	return start_addr; 
