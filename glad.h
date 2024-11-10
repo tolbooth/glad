@@ -22,7 +22,7 @@
 #define DEFAULT_CHUNK_SIZE (4096L*1024L)/(sizeof(char*))
 #define CHUNK_ALLOC_SIZE(X) (sizeof(chunk) + (sizeof(char*) * X)) 
 
-#define ROUND_UP(val, size) (val + size - 1) & -size;
+#define ROUND_UP(val, size) ((val + size - 1) & -size);
 #define ZEROMEM 0x1
 #define SOFTFAIL 0x10
 
@@ -71,7 +71,7 @@ chunk* alloc_chunk(ptrdiff_t size, int flags)
 	/* Anonymous map, compatible with systems that lack MAP_ANONYMOUS */	
 	int fd = open("/dev/zero", O_RDWR);
 	
-	if (!fd)
+	if (fd == -1)
 		return 0;
 
 	chunk* ret_chunk = mmap(0, 
