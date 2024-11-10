@@ -147,7 +147,7 @@ void* arena_alloc(arena* arena, const ptrdiff_t num_bytes, int flags)
 	while (cursor) {
 		if (cursor->ch_size - cursor->ch_offset >= alloc_size) {
 			start_addr = &cursor->ch_data[cursor->ch_offset];
-			cursor->ch_offset += alloc_size + 1;
+			cursor->ch_offset += alloc_size;
 			return start_addr;
 		}	
 		cursor = cursor->ch_next;	
