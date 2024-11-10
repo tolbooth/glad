@@ -13,7 +13,7 @@ void run_test(const char* test_name, void (*test_func)()) {
 // Test alloc_chunk with basic, edge, and error cases
 void test_alloc_chunk_basic() {
     chunk* ch = alloc_chunk(1024, 0);
-    assert(ch != NULL);
+    assert(ch);
     assert(ch->ch_size == 1024);
     assert(ch->ch_offset == 0);
     free_chunk(ch);
@@ -21,12 +21,12 @@ void test_alloc_chunk_basic() {
 
 void test_alloc_chunk_zero_size() {
     chunk* ch = alloc_chunk(0, 0);
-    assert(ch == NULL);
+    assert(ch == 0);
 }
 
 void test_alloc_chunk_zeromem() {
     chunk* ch = alloc_chunk(512, ZEROMEM);
-    assert(ch != NULL);
+    assert(ch);
     for (size_t i = 0; i < 512 * sizeof(char*); ++i) {
         assert(ch->ch_data[i] == 0);
     }
@@ -36,36 +36,36 @@ void test_alloc_chunk_zeromem() {
 // Test free_chunk for valid and null inputs
 void test_free_chunk_valid() {
     chunk* ch = alloc_chunk(512, 0);
-    assert(ch != NULL);
+    assert(ch);
     free_chunk(ch);  // Should not crash
 }
 
 void test_free_chunk_null() {
-    // Pass NULL to free_chunk, it should not fail/assert
-    free_chunk(NULL);
+    // Pass 0 to free_chunk, it should not fail/assert
+    free_chunk(0);
 }
 
 // Test arena_alloc with valid, edge, and large allocation
 void test_arena_alloc_basic() {
     arena ar = {0};
     void* mem = arena_alloc(&ar, 1024, 0);
-    assert(mem != NULL);
-    assert(ar.ar_head != NULL);
+    assert(mem);
+    assert(ar.ar_head);
     arena_free(&ar, 0);
 }
 
 void test_arena_alloc_zero_size() {
     arena ar = {0};
     void* mem = arena_alloc(&ar, 0, 0);
-    assert(mem == NULL);
+    assert(mem == 0);
     arena_free(&ar, 0);
 }
 
 void test_arena_alloc_large_size() {
     arena ar = {0};
     void* mem = arena_alloc(&ar, DEFAULT_CHUNK_SIZE * 2, 0);
-    assert(mem != NULL);
-    assert(ar.ar_head != NULL);
+    assert(mem);
+    assert(ar.ar_head);
     arena_free(&ar, 0);
 }
 
@@ -94,16 +94,16 @@ void test_arena_get_size_multiple_chunks() {
 void test_arena_push_basic() {
     arena ar = {0};
     int data = 42;
-    int* pushed_data = (int*) arena_push(&ar, &data, sizeof(data), 0);
-    assert(pushed_data != NULL);
+    int* pushed_data = (int*)arena_push(&ar, &data, sizeof(data), 0);
+    assert(pushed_data);
     assert(*pushed_data == 42);
     arena_free(&ar, 0);
 }
 
 void test_arena_push_null_data() {
     arena ar = {0};
-    void* result = arena_push(&ar, NULL, 4, 0);
-    assert(result == NULL);
+    void* result = arena_push(&ar, 0, 4, 0);
+    assert(result == 0);
     arena_free(&ar, 0);
 }
 
@@ -111,8 +111,8 @@ void test_arena_push_large_data() {
     arena ar = {0};
     char data[DEFAULT_CHUNK_SIZE * 2];
     memset(data, 1, sizeof(data));
-    char* pushed_data = (char*) arena_push(&ar, data, sizeof(data), 0);
-    assert(pushed_data != NULL);
+    char* pushed_data = (char*)arena_push(&ar, data, sizeof(data), 0);
+    assert(pushed_data);
     for (size_t i = 0; i < sizeof(data); ++i) {
         assert(pushed_data[i] == 1);
     }
@@ -123,7 +123,7 @@ void test_arena_push_large_data() {
 void test_arena_crop_and_coalesce_empty() {
     arena ar = {0};
     void* result = arena_crop_and_coalesce(&ar, 0);
-    assert(result == NULL);
+    assert(result == 0);
 }
 
 void test_arena_crop_and_coalesce_basic() {
@@ -131,7 +131,8 @@ void test_arena_crop_and_coalesce_basic() {
     int data = 42;
     int* pushed_data = (int*) arena_push(&ar, &data, sizeof(data), 0);
     int* coalesced_data = (int*) arena_crop_and_coalesce(&ar, 0);
-    assert(coalesced_data != NULL);
+	assert(pushed_data);
+    assert(coalesced_data);
     assert(*coalesced_data == 42);
     arena_free(&ar, 0);
 }
@@ -142,7 +143,7 @@ void test_arena_crop_and_coalesce_large() {
     memset(data, 7, sizeof(data));
     arena_push(&ar, data, sizeof(data), 0);
     char* coalesced_data = (char*) arena_crop_and_coalesce(&ar, ZEROMEM);
-    assert(coalesced_data != NULL);
+    assert(coalesced_data);
     for (size_t i = 0; i < sizeof(data); ++i) {
         assert(coalesced_data[i] == 7);
     }
