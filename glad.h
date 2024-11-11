@@ -13,7 +13,6 @@
 
  /* 
   * goals: 
-  * 	- aligned/unaliged allocations 
   * 	- memory profiling 
   * 	- debugging, pass in info via a macro 
   * 	- support for new backends? WASM?
