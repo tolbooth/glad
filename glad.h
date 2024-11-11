@@ -10,6 +10,9 @@
 #include <string.h>
 #include <stdalign.h>
 #include <stdint.h>
+#include <stdlib.h>
+
+#define NDEBUG
 
  /* 
   * goals: 
@@ -20,7 +23,7 @@
 
 /* appropriately large. in this case, a full PMD (the layer of the 
  * page table hierarchy above a PTE) work of pages on x86 */
-#define DEFAULT_CHUNK_SIZE (4096L*1024L)/(sizeof(char))
+#define DEFAULT_CHUNK_SIZE (4096L*1024L*1024L)/(sizeof(char))
 #define CHUNK_ALLOC_SIZE(X) (sizeof(chunk) + (sizeof(char) * X))
 
 #define ROUND_UP(val, size) ((val + size - 1) & -size)

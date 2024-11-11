@@ -1,0 +1,25 @@
+digraph {
+	graph [fontname=Arial, nodesep=0.125, ranksep=0.25];
+	node [fontcolor=white, fontname=Arial, height=0, shape=box, style=filled, width=0];
+	edge [fontname=Arial];
+	"(below main)" [color="#ff0000", fontcolor="#ffffff", fontsize="10.00", label="glad\n\n99.95%\n(0.00%)\n2×"];
+	"(below main)" -> main [arrowsize="1.00", color="#ff0000", fontcolor="#ff0000", fontsize="10.00", label="99.95%\n1×", labeldistance="4.00", penwidth="4.00"];
+	"0x000000000001aa50" [color="#ff0000", fontcolor="#ffffff", fontsize="10.00", label="ld-linux-x86-64.so.2\n0x000000000001aa50\n100.00%\n(0.00%)\n0×"];
+	"0x000000000001aa50" -> "(below main)" [arrowsize="1.00", color="#ff0000", fontcolor="#ff0000", fontsize="10.00", label="99.95%\n1×", labeldistance="4.00", penwidth="4.00"];
+	"__memset_avx2_unaligned_erms" [color="#0d4783", fontcolor="#ffffff", fontsize="10.00", label="libc.so.6\n__memset_avx2_unaligned_erms\n12.32%\n(12.32%)\n2000000×"];
+	"_int_free" [color="#0c7f8f", fontcolor="#ffffff", fontsize="10.00", label="libc.so.6\n_int_free\n21.91%\n(21.91%)\n1000000×"];
+	"arena_alloc" [color="#0c9886", fontcolor="#ffffff", fontsize="10.00", label="glad\narena_alloc\n28.07%\n(28.07%)\n1000000×"];
+	"benchmark_arena_alloc" [color="#0baa3f", fontcolor="#ffffff", fontsize="10.00", label="glad\nbenchmark_arena_alloc\n41.76%\n(7.53%)\n1×"];
+	"benchmark_arena_alloc" -> "__memset_avx2_unaligned_erms" [arrowsize="0.35", color="#0d287b", fontcolor="#0d287b", fontsize="10.00", label="6.16%\n1000000×", labeldistance="0.50", penwidth="0.50"];
+	"benchmark_arena_alloc" -> "arena_alloc" [arrowsize="0.53", color="#0c9886", fontcolor="#0c9886", fontsize="10.00", label="28.07%\n1000000×", labeldistance="1.12", penwidth="1.12"];
+	"benchmark_malloc" [color="#45c108", fontcolor="#ffffff", fontsize="10.00", label="glad\nbenchmark_malloc\n58.19%\n(7.87%)\n1×"];
+	"benchmark_malloc" -> "__memset_avx2_unaligned_erms" [arrowsize="0.35", color="#0d287b", fontcolor="#0d287b", fontsize="10.00", label="6.16%\n1000000×", labeldistance="0.50", penwidth="0.50"];
+	"benchmark_malloc" -> free [arrowsize="0.55", color="#0c9a7d", fontcolor="#0c9a7d", fontsize="10.00", label="30.12%\n1000000×", labeldistance="1.20", penwidth="1.20"];
+	"benchmark_malloc" -> malloc [arrowsize="0.37", color="#0c5085", fontcolor="#0c5085", fontsize="10.00", label="14.03%\n1000000×", labeldistance="0.56", penwidth="0.56"];
+	free [color="#0c9a7d", fontcolor="#ffffff", fontsize="10.00", label="libc.so.6\nfree\n30.12%\n(8.21%)\n1000000×"];
+	free -> "_int_free" [arrowsize="0.47", color="#0c7f8f", fontcolor="#0c7f8f", fontsize="10.00", label="21.91%\n1000000×", labeldistance="0.88", penwidth="0.88"];
+	main [color="#ff0000", fontcolor="#ffffff", fontsize="10.00", label="glad\nmain\n99.95%\n(0.00%)\n1×"];
+	main -> "benchmark_arena_alloc" [arrowsize="0.65", color="#0baa3f", fontcolor="#0baa3f", fontsize="10.00", label="41.76%\n1×", labeldistance="1.67", penwidth="1.67"];
+	main -> "benchmark_malloc" [arrowsize="0.76", color="#45c108", fontcolor="#45c108", fontsize="10.00", label="58.19%\n1×", labeldistance="2.33", penwidth="2.33"];
+	malloc [color="#0c5085", fontcolor="#ffffff", fontsize="10.00", label="libc.so.6\nmalloc\n14.03%\n(14.03%)\n1000001×"];
+}
