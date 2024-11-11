@@ -9,18 +9,26 @@ To use Glad in your project, clone the repository and include the header `glad.h
 ```c
 #include "glad.h"
 
-// Initialize an empty arena
-arena my_arena = {0};
+typedef struct {
+    int id;
+    char name[64];
+} Person;
 
-// Allocate a struct in the arena
-struct *my_struct = arena_alloc(&my_arena, sizeof *my_struct, ZEROMEM);
+arena ar = {0}; // Initialize an empty arena
 
-// Push an array onto the arena
-int numbers[5] = {1, 2, 3, 4, 5};
-int *arena_numbers = (int *)arena_push(&my_arena, numbers, sizeof numbers, ZEROMEM);
+// Allocate a single Person using glad_new
+Person* person = glad_new(&ar, Person); 
+person->id = 1;
+strcpy(person->name, "John Doe");
 
-// Release all associated memory
-arena_free(&my_arena, ZEROMEM);
+// Allocate an array of 10 Persons using glad_new
+Person* people = glad_new(&ar, Person, 10);
+
+// Push data into the arena using glad_push
+int data[128] = {0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, ...};
+int* pushed_data = glad_push(&ar, int, data, 128);
+
+arena_free(&ar, ZEROMEM);
 ```
 
 
