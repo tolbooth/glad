@@ -10,7 +10,7 @@ void run_test(const char* test_name, void (*test_func)()) {
     printf("%s passed.\n", test_name);
 }
 
-// Test alloc_chunk with basic, edge, and error cases
+// Test alloc_chunk with basic, zero size, and error cases
 void test_alloc_chunk_basic() {
     chunk* ch = alloc_chunk(1024, 0);
     assert(ch);
@@ -27,8 +27,9 @@ void test_alloc_chunk_zero_size() {
 void test_alloc_chunk_zeromem() {
     chunk* ch = alloc_chunk(512, ZEROMEM);
     assert(ch);
-    for (size_t i = 0; i < 512 * sizeof(char*); ++i) {
-        assert(ch->ch_data[i] == 0);
+	unsigned char* data = (unsigned char*)ch->ch_data;
+    for (size_t i = 0; i < 512; ++i) {
+        assert(data[i] == 0);
     }
     free_chunk(ch);
 }
@@ -45,7 +46,7 @@ void test_free_chunk_null() {
     free_chunk(0);
 }
 
-// Test arena_alloc with valid, edge, and large allocation
+// Test arena_alloc with valid, zero size, and large allocation
 void test_arena_alloc_basic() {
     arena ar = {0};
     void* mem = arena_alloc(&ar, 1024, 0);
@@ -69,7 +70,7 @@ void test_arena_alloc_large_size() {
     arena_free(&ar, 0);
 }
 
-// Test arena_get_size for empty, partial, and full arenas
+// Test arena_get_size for empty and large arenas
 void test_arena_get_size_empty() {
     arena ar = {0};
     assert(arena_get_size(&ar) == 0);
@@ -90,7 +91,7 @@ void test_arena_get_size_multiple_chunks() {
     arena_free(&ar, 0);
 }
 
-// Test arena_push with normal, edge, and null data
+// Test arena_push with normal, large, and null data
 void test_arena_push_basic() {
     arena ar = {0};
     int data = 42;
@@ -150,13 +151,13 @@ void test_arena_crop_and_coalesce_large() {
     arena_free(&ar, 0);
 }
 
-// Test arena_copy with valid, empty, and overlapping arenas
+// Test arena_copy with valid and empty arenas
 void test_arena_copy_basic() {
     arena src = {0}, dst = {0};
     int data = 123;
     arena_push(&src, &data, sizeof(data), 0);
     arena_copy(&dst, &src, 0);
-    int* dst_data = (int*) arena_get_size(&dst);
+    int* dst_data = (int*)dst.ar_head->ch_data;
     assert(dst_data && *dst_data == 123);
     arena_free(&src, 0);
     arena_free(&dst, 0);
@@ -194,6 +195,11 @@ void test_arena_free_basic() {
     arena_free(&ar, ZEROMEM); // Should not crash
 }
 
+void test_arena_free_empty() {
+    arena ar = {0};
+    arena_free(&ar, ZEROMEM); // Should not crash
+}
+
 // Main function to run all tests
 int main() {
     run_test("test_alloc_chunk_basic", test_alloc_chunk_basic);
@@ -226,6 +232,7 @@ int main() {
     run_test("test_arena_reset", test_arena_reset);
 
     run_test("test_arena_free_basic", test_arena_free_basic);
+	run_test("test_arnea_free_empty", test_arena_free_empty);
 
     printf("All tests passed.\n");
     return 0;

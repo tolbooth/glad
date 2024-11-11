@@ -19,8 +19,8 @@
 
 /* appropriately large. in this case, a full PMD (the layer of the 
  * page table hierarchy above a PTE) work of pages on x86 */
-#define DEFAULT_CHUNK_SIZE (4096L*1024L)/(sizeof(char*))
-#define CHUNK_ALLOC_SIZE(X) (sizeof(chunk) + (sizeof(char*) * X)) 
+#define DEFAULT_CHUNK_SIZE (4096L*1024L)/(sizeof(void*))
+#define CHUNK_ALLOC_SIZE(X) (sizeof(chunk) + (sizeof(void*) * X)) 
 
 #define ROUND_UP(val, size) ((val + size - 1) & -size)
 #define ZEROMEM 0x1 	/* If this flag is set for a function that accepts it, the corresponding memory will be zeroed */
@@ -39,7 +39,7 @@ struct chunk {
 	chunk* ch_next;
 	ptrdiff_t ch_size;
 	ptrdiff_t ch_offset;
-	char *ch_data[];
+	void* ch_data[];
 };
 
 typedef struct arena arena; 
@@ -107,11 +107,11 @@ chunk* alloc_chunk(ptrdiff_t size, int flags)
  *
  * @return  	void, asserts on munmap failure.
  */
-void free_chunk(chunk* ch)
+void free_chunk(chunk* chunk)
 {
-	assert(ch);
-	ptrdiff_t allocation_size = CHUNK_ALLOC_SIZE(ch->ch_size);
-	int check = munmap(ch, allocation_size);	
+	if (!chunk) return;
+	ptrdiff_t allocation_size = CHUNK_ALLOC_SIZE(chunk->ch_size);
+	int check = munmap(chunk, allocation_size);	
 	assert(!check);
 }
 
@@ -131,7 +131,7 @@ void free_chunk(chunk* ch)
  */
 void* arena_alloc(arena* arena, const ptrdiff_t num_bytes, int flags)
 {
-	if (!arena)
+	if (!arena || !num_bytes)
 		return 0;	
 
 	ptrdiff_t alloc_size = ROUND_UP(num_bytes, sizeof(char*));
@@ -235,6 +235,9 @@ void* arena_crop_and_coalesce(arena* arena, int flags)
 	ptrdiff_t alloc_size = arena_get_size(arena);
 	chunk* cropped = alloc_chunk(alloc_size, flags); 
 
+	if (!cropped)
+		return 0;
+
 	chunk* cursor = arena->ar_head;
 	ptrdiff_t curr_offset = 0;
 	while (cursor) {
@@ -326,30 +329,37 @@ void arena_copy(arena *restrict copy_dst, const arena *restrict copy_src, int fl
 {
 	if (!copy_dst || !copy_src) 
 		return;
+	if (!copy_src->ar_head || !copy_src->ar_tail)
+		return;
+	
+	/* allocate the head of our new list */	
+	chunk *dst_head = alloc_chunk(copy_src->ar_head->ch_size, flags);
+	dst_head->ch_offset = copy_src->ar_head->ch_offset;
+	dst_head->ch_size = copy_src->ar_head->ch_size;
+	memcpy(dst_head->ch_data,
+			copy_src->ar_head->ch_data, 
+			sizeof(char*) * copy_src->ar_head->ch_offset);
+	copy_dst->ar_head = dst_head;
+	copy_dst->ar_tail = copy_dst->ar_head;
 
-	copy_dst->ar_head = 0;
-	copy_dst->ar_tail = 0;
-	
-	chunk *src_cursor = copy_src->ar_head;
-	chunk *dst_cursor = 0;
-	
+	chunk *src_cursor = copy_src->ar_head->ch_next;
+	chunk *dst_cursor = dst_head;
 	while (src_cursor) {
 		chunk *new_chunk = alloc_chunk(src_cursor->ch_size, flags);
 		/* cleanup the new area if we ever fail to allocate */
 		if (!new_chunk) {
-		    arena_free(copy_dst, ZEROMEM);
+		    arena_free(copy_dst, flags);
 		    return;
 		}
 		
 		new_chunk->ch_offset = src_cursor->ch_offset;
-		memcpy(new_chunk->ch_data, src_cursor->ch_data, sizeof(char*) * src_cursor->ch_offset);
+		new_chunk->ch_size = src_cursor->ch_size;
+		memcpy(new_chunk->ch_data,
+				src_cursor->ch_data,
+				sizeof(char*) * src_cursor->ch_offset);
 		
-		if (!copy_dst->ar_head) {
-		    copy_dst->ar_head = new_chunk;
-		} else {
-		    dst_cursor->ch_next = new_chunk;
-		}
-		
+		dst_cursor->ch_next = new_chunk;
+
 		copy_dst->ar_tail = new_chunk;
 		dst_cursor = new_chunk;
 		src_cursor = src_cursor->ch_next;
