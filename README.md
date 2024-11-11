@@ -42,7 +42,7 @@ glad is currently designed for Linux systems due to its reliance on mmap. The de
 
 The main goal of an arena allocator is to simplify the logic of handling dynamically allocated structures. In testing, I've found a significant performance gain over `malloc` when performing consecutive small allocations. This graph was generated via callgrind and [gprof2dot](https://github.com/jrfonseca/gprof2dot).
 
-![Call graph](call_graph.png?raw=true)
+![Call graph](images/call_graph.png?raw=true)
 
 ## License
 
